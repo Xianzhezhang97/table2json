@@ -1,0 +1,36 @@
+<!doctype html>
+<html
+  class="scroll-smooth js no-touch progressive-image no-mobile-devices enhanced no-reduced-motion no-safari vp-valid not-small-desktop single-breakpoint text-zoom-off"
+>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.2.0/flowbite.min.js"></script>
+    <link rel="stylesheet" href="./animation.css" />
+    <link
+      rel="icon"
+      href="https://3o.hk/images/2024/01/14/avatar.jpg"
+      type="image/x-icon"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
+    <title>Xianzhe's Page</title>
+  </head>
+  <script>
+    (function () {
+      const redir = sessionStorage.redirect;
+      delete sessionStorage.redirect;
+      if (redir && redir !== location.href) {
+        history.replaceState(null, null, redir);
+      }
+    })();
+  </script>
+
+  <body id="root" data-anim-scroll-group="body" class="scroll-smooth"></body>
+</html>
