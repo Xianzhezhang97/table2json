@@ -13,6 +13,12 @@ const EditableGrid = () => {
   const [isJsonFullScreen, setIsJsonFullScreen] = useState(false);
   const [isTableFullScreen, setIsTableFullScreen] = useState(false);
   const FullScreen = 'fixed top-8 left-8 right-8 bottom-8 z-50';
+  const ButtonStyle = 'rounded-full px-8 py-2 mr-2 text-white ';
+
+  const initialSpreadsheetData = Handsontable.helper.createSpreadsheetData(
+    4,
+    4,
+  );
 
   useEffect(() => {
     const savedData = localStorage.getItem('handsontableData');
@@ -26,11 +32,26 @@ const EditableGrid = () => {
         hotInstance.current = new Handsontable(hotRef.current, {
           data: dataArray,
           licenseKey: 'non-commercial-and-evaluation',
+          height: 'auto',
+          width: 'auto',
           rowHeaders: true,
+          colHeaders: [
+            'ID',
+            'Full name',
+            'Position',
+            'Country',
+            'City',
+            'Address',
+            'Zip code',
+            'Mobile',
+            'E-mail',
+          ],
+          fixedRowsStart: 1,
           colHeaders: true,
           contextMenu: true,
           manualColumnResize: true,
           manualRowResize: true,
+          dropdownMenu: true,
           afterChange: function (changes, source) {
             if (source !== 'loadData') {
               updateTableData();
@@ -61,11 +82,19 @@ const EditableGrid = () => {
         hotInstance.current = new Handsontable(hotRef.current, {
           data: initialData,
           licenseKey: 'non-commercial-and-evaluation',
-          rowHeaders: true,
+          fixedRowsTop: 1,
+          colHeaders: data[0],
           colHeaders: true,
+          fixedRowsTop: 1,
           contextMenu: true,
           manualColumnResize: true,
           manualRowResize: true,
+          dropdownMenu: true,
+          width: 'auto',
+          height: 'auto',
+          autoWrapRow: true,
+          autoWrapCol: true,
+
           afterChange: function (changes, source) {
             if (source !== 'loadData') {
               updateTableData();
@@ -113,10 +142,23 @@ const EditableGrid = () => {
       updateTableData();
     }
   };
-
-  const addColumn = () => {
-    hotInstance.current.alter('insert_col', hotInstance.current.countCols());
-    updateTableData();
+  const resetData = () => {
+    const initialData = initialSpreadsheetData;
+    hotInstance.current.loadData(initialData);
+    setJsonText(
+      JSON.stringify(
+        initialData.slice(1).map((row) => {
+          let obj = {};
+          row.forEach((cell, i) => {
+            obj[initialData[0][i]] = cell;
+          });
+          return obj;
+        }),
+        null,
+        2,
+      ),
+    );
+    localStorage.removeItem('handsontableData');
   };
 
   const removeColumn = () => {
@@ -161,38 +203,37 @@ const EditableGrid = () => {
 
   return (
     <div
-      className={`flex h-screen ${isTableFullScreen || isJsonFullScreen ? 'flex-col' : 'flex-col md:flex-row'} p-4 overflow-hidden`}
+      className={`flex h-screen ${isTableFullScreen || isJsonFullScreen ? '' : 'flex-col md:flex-row'} rounded-[28px] p-4 overflow-hidden`}
     >
       {!isJsonFullScreen && (
         <motion.div
           layout
           className={
-            isTableFullScreen ? FullScreen : `relative w-full md:w-1/2 p-4 `
+            isTableFullScreen ? FullScreen : `relative w-full md:w-1/2 p-4`
           }
         >
-          <div className='flex justify-between mb-4'>
+          <motion.div layout className='flex justify-between mb-8'>
             <div>
+              <a href='http://xianzhe.site'>
+                <button className={ButtonStyle + 'bg-blue-500'}>
+                  返回主页
+                </button>
+              </a>
               <button
-                onClick={addRow}
-                className='px-4 py-2 mr-2 text-white bg-blue-500 rounded'
+                onClick={resetData}
+                className={ButtonStyle + 'bg-red-500'}
               >
-                添加行
+                清空全部
               </button>
               <button
                 onClick={removeRow}
-                className='px-4 py-2 mr-2 text-white bg-red-500 rounded'
+                className={ButtonStyle + 'bg-green-500'}
               >
                 删除行
               </button>
               <button
-                onClick={addColumn}
-                className='px-4 py-2 mr-2 text-white bg-green-500 rounded'
-              >
-                添加列
-              </button>
-              <button
                 onClick={removeColumn}
-                className='px-4 py-2 mr-2 text-white bg-yellow-500 rounded'
+                className={ButtonStyle + 'bg-yellow-500'}
               >
                 删除列
               </button>
@@ -200,51 +241,59 @@ const EditableGrid = () => {
             <div>
               <button
                 onClick={copyTableToClipboard}
-                className='px-4 py-2 mr-2 text-white bg-gray-500 rounded'
+                className={ButtonStyle + 'bg-gray-500'}
               >
                 复制 Table 数据
               </button>
               <button
                 onClick={() => setIsTableFullScreen(!isTableFullScreen)}
-                className='px-4 py-2 text-white bg-indigo-500 rounded'
+                className={ButtonStyle + 'bg-indigo-500'}
               >
                 {isTableFullScreen ? '退出全屏' : '全屏表格'}
               </button>
             </div>
-          </div>
-          <div
-            ref={hotRef}
-            className={`w-full h-[94%]  border border-gray-300 mb-4 flex overflow-auto`}
-          ></div>
+          </motion.div>
+          <motion.div
+            className='w-full h-[90%] rounded-[28px] overflow-auto border border-gray-300 focus:border-blue-500'
+            layout
+          >
+            <div
+              ref={hotRef}
+              className={`w-full h-full  mb-4 scrollbar-hide  overflow-hidden`}
+            ></div>
+          </motion.div>
         </motion.div>
       )}
       {!isTableFullScreen && (
-        <motion.div layout className={`relative w-full md:w-1/2 p-4`}>
-          <div
+        <motion.div layout className={`flex relative w-full md:w-1/2 p-4 `}>
+          <motion.div
+            layout
             className={
-              isJsonFullScreen ? FullScreen : 'flex flex-col w-full h-full'
+              isJsonFullScreen ? FullScreen : 'flex flex-col w-full h-full '
             }
           >
-            <div className=''>
+            <div className='mb-8 gap-x-8'>
               <button
                 onClick={copyJsonToClipboard}
-                className='px-4 py-2 mr-2 text-white bg-gray-500 rounded'
+                className={ButtonStyle + 'bg-gray-500'}
               >
                 复制 JSON 数据
               </button>
               <button
                 onClick={() => setIsJsonFullScreen(!isJsonFullScreen)}
-                className='px-4 py-2 mb-4 text-white bg-indigo-500 rounded'
+                className={ButtonStyle + 'bg-indigo-500'}
               >
                 {isJsonFullScreen ? '退出全屏' : '全屏 JSON'}
               </button>
             </div>
-            <textarea
-              value={jsonText}
-              onChange={handleJsonChange}
-              className={`w-full h-[94%] p-4 pb-[50vh] border border-gray-300`}
-            ></textarea>
-          </div>
+            <div className='rounded-[28px] overflow-hidden w-full h-[90%]'>
+              <textarea
+                value={jsonText}
+                onChange={handleJsonChange}
+                className={`w-full h-full p-[28px] pb-[50vh] z-0 rounded-[28px] overflow-auto border border-gray-300`}
+              ></textarea>
+            </div>
+          </motion.div>
         </motion.div>
       )}
     </div>
