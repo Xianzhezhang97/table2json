@@ -2,9 +2,10 @@ import React, { useRef, useEffect, useState } from 'react';
 import Handsontable from 'handsontable';
 import 'handsontable/dist/handsontable.full.min.css';
 import 'tailwindcss/tailwind.css';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const EditableGrid = () => {
+  const lang = localStorage.getItem('lang') || '0';
   const hotRef = useRef(null);
   const hotInstance = useRef(null);
   const [selected, setSelected] = useState({ row: null, col: null });
@@ -35,19 +36,8 @@ const EditableGrid = () => {
           height: 'auto',
           width: 'auto',
           rowHeaders: true,
-          colHeaders: [
-            'ID',
-            'Full name',
-            'Position',
-            'Country',
-            'City',
-            'Address',
-            'Zip code',
-            'Mobile',
-            'E-mail',
-          ],
-          fixedRowsStart: 1,
           colHeaders: true,
+          fixedRowsStart: 1,
           contextMenu: true,
           manualColumnResize: true,
           manualRowResize: true,
@@ -64,7 +54,7 @@ const EditableGrid = () => {
         updateTableData();
       }
     } else {
-      initialData = Handsontable.helper.createSpreadsheetData(4, 4);
+      initialData = initialSpreadsheetData;
       setJsonText(
         JSON.stringify(
           initialData.slice(1).map((row) => {
@@ -82,10 +72,7 @@ const EditableGrid = () => {
         hotInstance.current = new Handsontable(hotRef.current, {
           data: initialData,
           licenseKey: 'non-commercial-and-evaluation',
-          fixedRowsTop: 1,
-          colHeaders: data[0],
           colHeaders: true,
-          fixedRowsTop: 1,
           contextMenu: true,
           manualColumnResize: true,
           manualRowResize: true,
@@ -94,7 +81,6 @@ const EditableGrid = () => {
           height: 'auto',
           autoWrapRow: true,
           autoWrapCol: true,
-
           afterChange: function (changes, source) {
             if (source !== 'loadData') {
               updateTableData();
@@ -118,6 +104,11 @@ const EditableGrid = () => {
 
   const updateTableData = () => {
     const data = hotInstance.current.getData();
+    if (data.length <= 1 || data[0].length === 0) {
+      alert('You must retain at least 2 rows or 1 column in the table');
+
+      return;
+    }
     const keys = data[0];
     const jsonData = data.slice(1).map((row) => {
       let obj = {};
@@ -137,11 +128,24 @@ const EditableGrid = () => {
   };
 
   const removeRow = () => {
-    if (selected.row !== null) {
+    if (selected.row !== null && hotInstance.current.countRows() > 2) {
       hotInstance.current.alter('remove_row', selected.row);
       updateTableData();
+    } else if (selected.row === null) {
+      alert(
+        lang == '0'
+          ? 'Cannot operate: \n\nYou should select at least one row'
+          : '无法操作: \n\n因为您需要至少选择一行。',
+      );
+    } else {
+      alert(
+        lang == '0'
+          ? 'Cannot remove row: \n\nAt least 2 rows must remain to maintain the data structure.'
+          : '无法移除此行: \n\n因为表格至少需要保留两行来维持数据结构。',
+      );
     }
   };
+
   const resetData = () => {
     const initialData = initialSpreadsheetData;
     hotInstance.current.loadData(initialData);
@@ -162,9 +166,21 @@ const EditableGrid = () => {
   };
 
   const removeColumn = () => {
-    if (selected.col !== null) {
+    if (selected.col !== null && hotInstance.current.countCols() > 1) {
       hotInstance.current.alter('remove_col', selected.col);
       updateTableData();
+    } else if (selected.col === null) {
+      alert(
+        lang == '0'
+          ? 'Cannot operate: \n\nYou should select at least one column'
+          : '无法操作: \n\n因为您需要至少选择一列。',
+      );
+    } else {
+      alert(
+        lang == '0'
+          ? 'Cannot remove column: \n\nAt least 1 column must remain to maintain the data structure.'
+          : '无法移除此列: \n\n因为表格至少需要保留一列来维持数据结构。',
+      );
     }
   };
 
@@ -180,6 +196,7 @@ const EditableGrid = () => {
       if (hotInstance.current) {
         hotInstance.current.loadData(newDataArray);
         setTableData(newData);
+        localStorage.setItem('handsontableData', JSON.stringify(newData));
       }
     } catch (error) {
       console.error('Invalid JSON format');
@@ -188,7 +205,9 @@ const EditableGrid = () => {
 
   const copyJsonToClipboard = () => {
     navigator.clipboard.writeText(jsonText);
-    alert('JSON data copied to clipboard!');
+    alert(
+      lang == '0' ? 'JSON data copied to clipboard!' : 'JSON数据已复制到剪贴板',
+    );
   };
 
   const copyTableToClipboard = () => {
@@ -196,7 +215,11 @@ const EditableGrid = () => {
       const data = hotInstance.current.getData();
       const dataString = data.map((row) => row.join('\t')).join('\n');
       navigator.clipboard.writeText(dataString).then(() => {
-        alert('Table data copied to clipboard!');
+        alert(
+          lang == '0'
+            ? 'Table data copied to clipboard!'
+            : '表格数据已复制到剪贴板',
+        );
       });
     }
   };
@@ -205,97 +228,110 @@ const EditableGrid = () => {
     <div
       className={`flex h-screen ${isTableFullScreen || isJsonFullScreen ? '' : 'flex-col md:flex-row'} rounded-[28px] p-4 overflow-hidden`}
     >
-      {!isJsonFullScreen && (
-        <motion.div
-          layout
-          className={
-            isTableFullScreen ? FullScreen : `relative w-full md:w-1/2 p-4`
-          }
+      <div className='fixed z-50 top-8 left-8'>
+        <a href='http://xianzhe.site'>
+          <button className={ButtonStyle + 'bg-blue-500'}>
+            {lang == '0' ? 'Home' : '返回主页'}
+          </button>
+        </a>
+        <button onClick={resetData} className={ButtonStyle + 'bg-red-500'}>
+          {lang == '0' ? 'New' : '新建'}
+        </button>
+        <button onClick={removeRow} className={ButtonStyle + 'bg-green-500'}>
+          {lang == '0' ? 'Delete Row' : '删除行'}
+        </button>
+        <button
+          onClick={removeColumn}
+          className={ButtonStyle + 'bg-yellow-500'}
         >
-          <motion.div layout className='flex justify-between mb-8'>
-            <div>
-              <a href='http://xianzhe.site'>
-                <button className={ButtonStyle + 'bg-blue-500'}>
-                  返回主页
-                </button>
-              </a>
-              <button
-                onClick={resetData}
-                className={ButtonStyle + 'bg-red-500'}
-              >
-                清空全部
-              </button>
-              <button
-                onClick={removeRow}
-                className={ButtonStyle + 'bg-green-500'}
-              >
-                删除行
-              </button>
-              <button
-                onClick={removeColumn}
-                className={ButtonStyle + 'bg-yellow-500'}
-              >
-                删除列
-              </button>
-            </div>
-            <div>
-              <button
-                onClick={copyTableToClipboard}
-                className={ButtonStyle + 'bg-gray-500'}
-              >
-                复制 Table 数据
-              </button>
-              <button
-                onClick={() => setIsTableFullScreen(!isTableFullScreen)}
-                className={ButtonStyle + 'bg-indigo-500'}
-              >
-                {isTableFullScreen ? '退出全屏' : '全屏表格'}
-              </button>
-            </div>
-          </motion.div>
-          <motion.div
-            className='w-full h-[90%] rounded-[28px] overflow-auto border border-gray-300 focus:border-blue-500'
-            layout
-          >
-            <div
-              ref={hotRef}
-              className={`w-full h-full  mb-4 scrollbar-hide  overflow-hidden`}
-            ></div>
-          </motion.div>
-        </motion.div>
-      )}
-      {!isTableFullScreen && (
-        <motion.div layout className={`flex relative w-full md:w-1/2 p-4 `}>
+          {lang == '0' ? 'Delete Column' : '删除列'}
+        </button>
+      </div>
+      <div className='z-40 flex justify-end w-full'>
+        {!isJsonFullScreen && (
           <motion.div
             layout
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             className={
-              isJsonFullScreen ? FullScreen : 'flex flex-col w-full h-full '
+              isTableFullScreen ? FullScreen : `relative w-full md:w-1/2 p-4`
             }
           >
-            <div className='mb-8 gap-x-8'>
-              <button
-                onClick={copyJsonToClipboard}
-                className={ButtonStyle + 'bg-gray-500'}
-              >
-                复制 JSON 数据
-              </button>
-              <button
-                onClick={() => setIsJsonFullScreen(!isJsonFullScreen)}
-                className={ButtonStyle + 'bg-indigo-500'}
-              >
-                {isJsonFullScreen ? '退出全屏' : '全屏 JSON'}
-              </button>
-            </div>
-            <div className='rounded-[28px] overflow-hidden w-full h-[90%]'>
-              <textarea
-                value={jsonText}
-                onChange={handleJsonChange}
-                className={`w-full h-full p-[28px] pb-[50vh] z-0 rounded-[28px] overflow-auto border border-gray-300`}
-              ></textarea>
-            </div>
+            <motion.div layout className='flex justify-end mb-8'>
+              <div>
+                <button
+                  onClick={copyTableToClipboard}
+                  className={ButtonStyle + 'bg-gray-500'}
+                >
+                  {lang == '0' ? 'Copy Table' : ' 复制 Table 数据'}
+                </button>
+                <button
+                  onClick={() => setIsTableFullScreen(!isTableFullScreen)}
+                  className={ButtonStyle + 'bg-indigo-500'}
+                >
+                  {isTableFullScreen
+                    ? lang == '0'
+                      ? 'Exit Fullscreen'
+                      : '退出全屏显示'
+                    : lang == '0'
+                      ? 'Fullscreen Table'
+                      : '全屏表格'}
+                </button>
+              </div>
+            </motion.div>
+            <motion.div
+              layout
+              className='w-full h-[90%] rounded-[28px] overflow-hidden border border-gray-300 focus:border-blue-500'
+            >
+              <motion.div className='w-full h-[100%] overflow-auto pb-[0vh]'>
+                <div
+                  ref={hotRef}
+                  className={`w-full h-full pb-4 scrollbar-auto overflow-hidden`}
+                ></div>
+              </motion.div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
+        {!isTableFullScreen && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            layout
+            className={`flex relative w-full md:w-1/2 p-4 `}
+          >
+            <motion.div
+              layout
+              className={
+                isJsonFullScreen ? FullScreen : 'flex flex-col w-full h-full '
+              }
+            >
+              <div className='flex justify-end mb-8 '>
+                <button
+                  onClick={copyJsonToClipboard}
+                  className={ButtonStyle + 'bg-gray-500'}
+                >
+                  复制 JSON 数据
+                </button>
+                <button
+                  onClick={() => setIsJsonFullScreen(!isJsonFullScreen)}
+                  className={ButtonStyle + 'bg-indigo-500'}
+                >
+                  {isJsonFullScreen ? '退出全屏' : '全屏 JSON'}
+                </button>
+              </div>
+              <div className='rounded-[28px] overflow-hidden w-full h-[90%]'>
+                <textarea
+                  value={jsonText}
+                  onChange={handleJsonChange}
+                  className={`w-full h-full p-[28px] pb-[50vh] z-0 rounded-[28px] overflow-auto border border-gray-300`}
+                ></textarea>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 };
