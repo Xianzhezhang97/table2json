@@ -264,7 +264,7 @@ const EditableGrid = () => {
                   onClick={copyTableToClipboard}
                   className={ButtonStyle + 'bg-gray-500'}
                 >
-                  {lang == '0' ? 'Copy Table' : ' 复制 Table 数据'}
+                  {lang == '0' ? 'Copy' : ' 复制 Table 数据'}
                 </button>
                 <button
                   onClick={() => setIsTableFullScreen(!isTableFullScreen)}
@@ -272,10 +272,10 @@ const EditableGrid = () => {
                 >
                   {isTableFullScreen
                     ? lang == '0'
-                      ? 'Exit Fullscreen'
-                      : '退出全屏显示'
+                      ? 'Exit'
+                      : '退出全屏'
                     : lang == '0'
-                      ? 'Fullscreen Table'
+                      ? 'Fullscreen'
                       : '全屏表格'}
                 </button>
               </div>
@@ -312,13 +312,13 @@ const EditableGrid = () => {
                   onClick={copyJsonToClipboard}
                   className={ButtonStyle + 'bg-gray-500'}
                 >
-                  复制 JSON 数据
+                  {lang == '0' ? 'Copy' : '复制 JSON 数据'}
                 </button>
                 <button
                   onClick={() => setIsJsonFullScreen(!isJsonFullScreen)}
                   className={ButtonStyle + 'bg-indigo-500'}
                 >
-                  {isJsonFullScreen ? '退出全屏' : '全屏 JSON'}
+                  {isJsonFullScreen ? 'Exit' : '全屏 JSON'}
                 </button>
               </div>
               <div className='rounded-[28px] overflow-hidden w-full h-[90%]'>
