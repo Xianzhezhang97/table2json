@@ -188,7 +188,8 @@ const EditableGrid = () => {
     const newJsonText = e.target.value;
     setJsonText(newJsonText);
     try {
-      const newData = JSON.parse(newJsonText);
+      const formattedJsonText = formatJson(newJsonText);
+      const newData = JSON.parse(formattedJsonText);
       const newDataArray = [
         Object.keys(newData[0]),
         ...newData.map(Object.values),
@@ -199,8 +200,16 @@ const EditableGrid = () => {
         localStorage.setItem('handsontableData', JSON.stringify(newData));
       }
     } catch (error) {
-      console.error('Invalid JSON format');
+      console.error('Invalid JSON format', error);
     }
+  };
+
+  const formatJson = (jsonText) => {
+    // 替换 id, label, logo, status 等键以及它们的值为标准的双引号形式
+    return jsonText
+      .replace(/([a-zA-Z]+):/g, '"$1":')
+      .replace(/'/g, '"')
+      .replace(/`/g, '"');
   };
 
   const copyJsonToClipboard = () => {
