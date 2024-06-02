@@ -189,7 +189,9 @@ const EditableGrid = () => {
     setJsonText(newJsonText);
     try {
       const formattedJsonText = formatJson(newJsonText);
+      console.log('Formatted JSON:', formattedJsonText); // 调试输出格式化后的 JSON
       const newData = JSON.parse(formattedJsonText);
+      console.log('Parsed Data:', newData); // 调试输出解析后的数据
       const newDataArray = [
         Object.keys(newData[0]),
         ...newData.map(Object.values),
@@ -201,6 +203,8 @@ const EditableGrid = () => {
       }
     } catch (error) {
       console.error('Invalid JSON format', error);
+      // 可以在这里添加 UI 反馈
+      alert('Invalid JSON format: ' + error.message);
     }
   };
 
